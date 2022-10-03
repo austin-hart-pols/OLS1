@@ -163,7 +163,7 @@ $$
   Given the data, a school's expected language proficiency increases by 0.94-points for every one-point increase in math proficiency.
   
 
-&lt;img src="OLS1slides_files/figure-html/fit1-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="OLS1slides_files/figure-html/fit1-1.svg" style="display: block; margin: auto;" /&gt;
 
 
 
@@ -202,7 +202,7 @@ $$
 &gt;
 &gt; Chooses parameters that minimize the "sum of squared errors".
 
-&lt;img src="OLS1slides_files/figure-html/fit2-1.png" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="OLS1slides_files/figure-html/fit2-1.svg" style="display: block; margin: auto;" /&gt;
 
 
 ---
@@ -214,7 +214,123 @@ class: inverse, middle, right
 ---
 # Skew and the sensitive mean
 
-stuff
+- Mean sensitive to outliers
+$$
+E(Y) = \mu_Y= \sum\frac{y_i}{n}
+$$
+  - Extreme values inflate numerator
+  - Pulls mean from median
+  - Mean becomes poor/biased measure of the middle
+  
+- Regression is a model of the mean
+  - Skew in `\(X\)` and/or `\(Y\)` causes problems
+  - Use log-transformation to "normalize" variables
+
+---
+# The bitdata.csv file
+
+- Source: Haftel and Thompson (2013) *Delayed Ratification*
+- Units of observation: Bilateral Investment Treaty
+- Total observations: 2,595 BITs
+- Primary outcome: time (months) to ratification
+
+---
+# Notice a BIT of skew?
+
+
+```r
+# Check the mean vs median
+  summary(bit$month_count)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    0.00   12.00   23.00   37.96   45.00  568.00
+```
+
+```r
+# Visualize
+  hist(bit$month_count, main ='skewed')
+```
+
+&lt;img src="OLS1slides_files/figure-html/seeskew-1.svg" style="display: block; margin: auto;" /&gt;
+
+---
+# What to do with positive skew
+
+- Got positive skew? Use the natural logarithm
+  - Use only with positive values
+  - Got zeroes? Use `\(+1\)` fix
+  
+
+```r
+# Check the mean vs median
+  summary(log(bit$month_count + 1))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   2.565   3.178   3.174   3.829   6.344
+```
+
+```r
+# Use the natural logarithm to normalize
+  hist(log(bit$month_count + 1), main = 'Log-transformed', xlab = '')
+```
+
+&lt;img src="OLS1slides_files/figure-html/skewfix1-1.svg" style="display: block; margin: auto;" /&gt;
+
+---
+# Skew and regression
+
+&gt; Regress months to ratification on relative wealth gap
+
+&lt;img src="OLS1slides_files/figure-html/skewreg-1.svg" style="display: block; margin: auto;" /&gt;
+
+---
+# What to do with that skew?
+
+&gt; Adjust for positive skew in both variables
+
+&lt;img src="OLS1slides_files/figure-html/skewreg2-1.svg" style="display: block; margin: auto;" /&gt;
+
+---
+# Consequences of log-transformation
+
+&gt; Using logged variables changes interpretation of `\(\beta_1\)`
+
+- `\(Y,~X\)`: 
+  - *Unit* increase in X, `\(\beta\)` *unit* change in Y
+   
+- `\(log(Y),~X\)`:
+  - One *unit* increase in X, `\((exp(\beta)-1)*100\)` **percent** change in Y
+   
+- `\(Y,~log(X)\)`:
+  - One **percent** increase in X, `\(\beta/100\)` *unit* change in Y
+   
+- `\(log(X),~log(Y)\)`: 
+  - One **percent** increase in X, `\(\beta\)` **percent** change in Y
+
+---
+# BIT of an example
+
+
+```r
+lm(log(month_count + 1) ~ log_gapgdppc, data = bit)
+```
+
+```
+## 
+## Call:
+## lm(formula = log(month_count + 1) ~ log_gapgdppc, data = bit)
+## 
+## Coefficients:
+##  (Intercept)  log_gapgdppc  
+##       3.9481       -0.0848
+```
+
+I find that a 1% increase in wealth gap between signatories reduces the expected ratification spell by 0.08%.
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

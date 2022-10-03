@@ -18,7 +18,7 @@ output:
 options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(
   message=FALSE, warning=FALSE, eval = TRUE, echo = FALSE, 
-  fig.align = 'center'
+  fig.align = 'center', dev = 'svg'
 )
 ```
 
@@ -174,7 +174,7 @@ $$
 >
 > Chooses parameters that minimize the "sum of squared errors".
 
-```{r fit2, out.height="50%", out.width="50%"}
+```{r fit2, fig.width=4, fig.height=4, dpi=250}
 # Scatter w/OLS fit (numeric X, numeric Y)
   # 1. store OLS estimates
     est = lm(ProfLang ~ ProfMath, data = dcps)
@@ -204,6 +204,92 @@ $$
 - Regression is a model of the mean
   - Skew in $X$ and/or $Y$ causes problems
   - Use log-transformation to "normalize" variables
+
+---
+# The bitdata.csv file
+
+- Source: Haftel and Thompson (2013) *Delayed Ratification*
+- Units of observation: Bilateral Investment Treaty
+- Total observations: 2,595 BITs
+- Primary outcome: time (months) to ratification
+
+---
+# Notice a BIT of skew?
+
+```{r seeskew, echo=TRUE, fig.width=3.5, fig.height=2.5, dpi=250}
+# Check the mean vs median
+  summary(bit$month_count)
+
+# Visualize
+  hist(bit$month_count, main ='skewed')
+
+```
+
+---
+# What to do with positive skew
+
+- Got positive skew? Use the natural logarithm
+  - Use only with positive values
+  - Got zeroes? Use $+1$ fix
   
+```{r skewfix1, echo=TRUE,fig.width=3.5, fig.height=2.5, dpi=250}
+# Check the mean vs median
+  summary(log(bit$month_count + 1))
+
+# Use the natural logarithm to normalize
+  hist(log(bit$month_count + 1), main = 'Log-transformed', xlab = '')
+
+```
+
 ---
 # Skew and regression
+
+> Regress months to ratification on relative wealth gap
+
+```{r skewreg,fig.width=4, fig.height=4, dpi=250}
+
+e1 = lm(month_count ~ exp(log_gapgdppc), data = bit)
+plot(month_count ~ exp(log_gapgdppc), data = bit, xlab = 'Gap in GDPpc')
+abline(e1, col = 'red', lw = 3)
+
+```
+
+---
+# What to do with that skew?
+
+> Adjust for positive skew in both variables
+
+```{r skewreg2,fig.width=4, fig.height=4, dpi=250}
+
+e1 = lm(log(1+month_count) ~ log_gapgdppc, data = bit)
+plot(log(1+month_count) ~ log_gapgdppc, data = bit)
+abline(e1, col = 'green', lw = 3)
+
+```
+
+---
+# Consequences of log-transformation
+
+> Using logged variables changes interpretation of $\beta_1$
+
+- $Y,~X$: 
+  - *Unit* increase in X, $\beta$ *unit* change in Y
+   
+- $log(Y),~X$:
+  - One *unit* increase in X, $(exp(\beta)-1)*100$ **percent** change in Y
+   
+- $Y,~log(X)$:
+  - One **percent** increase in X, $\beta/100$ *unit* change in Y
+   
+- $log(X),~log(Y)$: 
+  - One **percent** increase in X, $\beta$ **percent** change in Y
+
+---
+# BIT of an example
+
+```{r puns, echo=TRUE}
+lm(log(month_count + 1) ~ log_gapgdppc, data = bit)
+```
+
+I find that a 1% increase in wealth gap between signatories reduces the expected ratification spell by 0.08%.
+
