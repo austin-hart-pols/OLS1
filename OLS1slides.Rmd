@@ -1,0 +1,209 @@
+---
+title: "OLS regression, Part 1"
+subtitle: "A model of the mean"
+author: "Austin Hart"
+institute: "American University"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: [default, rladies, rladies-fonts]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  message=FALSE, warning=FALSE, eval = TRUE, echo = FALSE, 
+  fig.align = 'center'
+)
+```
+
+```{r results='hide'}
+  library(tidyverse)
+  load("DCPS testing.RData")
+  bit = read_csv('bitdata.csv')
+```
+
+# Data
+
+- Relies on examples from:
+  - DCPS testing.RData
+  - bitdata.csv
+  
+```{r samset, eval=FALSE,echo=TRUE}
+# Load packages
+  library(tidyverse)
+
+# Set project directory
+  setwd("/Users/hart/Documents/my600folder")
+  
+# Load data
+  load("DCPS testing.RData")
+  bit = read_csv('bitdata.csv')
+```
+
+---
+# Linear regression
+
+- A model of the mean of $Y$, conditional on $X$
+  - Mean of Y: $E(Y) = \mu_Y$
+  - ...conditional on X: $E(Y|X) = \alpha + \beta_1X$
+
+- *Most* appropriate when you have:
+  - continuous outcome variable (DV/Y)
+  - continuous exposure variable (IV/X)
+
+---
+# Nuts and bolts
+
+- Estimate $Y = \alpha + \beta_1X + \beta_2Z +...$
+
+- Present parameters of the line
+  - $\alpha$ Intercept = $E(Y|X=0)$
+  - $\beta_1$ Slope = $E(\Delta Y | \Delta X)$
+  Change in $E(Y)$ for unit-increase in X, net of $Z$
+  
+  
+---
+class: inverse, middle, right
+
+# LINEAR RELATIONSHIPS
+### and basics of a line
+
+
+---
+# Regression and the mean outcome
+
+- Unconditional mean of outcome variable, $Y$
+$$
+E(Y) = \mu
+$$
+
+- Mean outcome, $Y$, as a linear function of $X$
+$$
+E(Y|X) = \alpha + \beta_1 X_i
+$$
+
+---
+# Example 1: DCPStesting.Rdata
+
+- Unconditional mean of outcome variable, $Y$
+$$
+E(Y) = \mu
+$$
+
+
+```{r ex1, echo=TRUE}
+  # unconditional mean
+    mean(dcps$ProfLang)
+
+    lm(ProfLang ~ 1, data = dcps)
+```
+
+---
+# Example 2: DCPStesting.Rdata
+
+- Mean outcome, $Y$, as a linear function of $X$
+$$
+E(Y|X) = \alpha + \beta_1 X_i
+$$
+
+```{r ex2, echo=TRUE}
+  # mean conditional on X
+    lm(ProfLang ~ ProfMath, data = dcps)
+```
+
+---
+# Example 3: DCPStesting.Rdata
+
+From prior estimates:
+$$
+E(ProfLang|ProfMath) = 4.3 + 0.94*ProfMath_i
+$$
+
+  Given the data, a school's expected language proficiency increases by 0.94-points for every one-point increase in math proficiency.
+  
+
+```{r fit1, fig.width=4, fig.height=4, dpi=250}
+# Scatter w/OLS fit (numeric X, numeric Y)
+  # 1. store OLS estimates
+    est = lm(ProfLang ~ ProfMath, data = dcps)
+  # 2. plot  
+    plot(ProfLang ~ ProfMath, data = dcps) # scatter
+    abline(est, col = 'cornflowerblue') # add linear fit
+```
+
+
+
+---
+class: inverse, middle, right
+
+# OLS ESTIMATION
+### finding the line of best fit
+
+
+---
+# Population Regression Function
+
+Model $Y$ as a linear function of $X$:
+$$
+Y_i = \alpha + \beta_1 X_i + e_i
+$$
+
+- The line: $E(Y|X) = \alpha + \beta_1X_i$
+  - $\alpha$ Intercept = $E(Y|X=0)$
+
+  - $\beta_1$ Slope = $E(\Delta Y | \Delta X)$
+
+- The error term $e_i$
+  - vertical distance between point and line $Y_i - (\alpha + \beta_1 X_i)$
+
+  - reflects probabilistic nature of estimation (noise)
+
+  - absorbs systematic, unexplained variation in Y (potential bias)
+
+
+---
+# Line of BEST fit
+
+> OLS REGRESSION: method of estimating linear regression model. 
+>
+> Chooses parameters that minimize the "sum of squared errors".
+
+```{r fit2, out.height="50%", out.width="50%"}
+# Scatter w/OLS fit (numeric X, numeric Y)
+  # 1. store OLS estimates
+    est = lm(ProfLang ~ ProfMath, data = dcps)
+  # 2. plot  
+    plot(ProfLang ~ ProfMath, data = dcps) # scatter
+    abline(est, col = 'blue', lty=3, lw = 2) # add linear fit
+```
+
+
+---
+class: inverse, middle, right
+
+# Non-linearity
+### and the log-transformation
+
+---
+# Skew and the sensitive mean
+
+- Mean sensitive to outliers
+$$
+E(Y) = \mu_Y= \sum\frac{y_i}{n}
+$$
+  - Extreme values inflate numerator
+  - Pulls mean from median
+  - Mean becomes poor/biased measure of the middle
+  
+- Regression is a model of the mean
+  - Skew in $X$ and/or $Y$ causes problems
+  - Use log-transformation to "normalize" variables
+  
+---
+# Skew and regression
